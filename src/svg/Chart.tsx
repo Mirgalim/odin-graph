@@ -1,12 +1,14 @@
 import { useState, type ReactNode, type SVGProps } from "react";
 import type { FilterValueType, Level } from "../types";
-import { data } from "./data";
+import { Section } from "../types";
 
 interface Props {
   filter: FilterValueType | null;
   selectedLevel: Level | null;
   onLevelChange: (level: Level | null) => void;
+  data: Map<Section, Map<string, Map<number, any>>>;
 }
+
 
 const RADIUS_DEFAULT: Record<Level, number> = {
   "1": 50,
@@ -26,7 +28,7 @@ const levelCircleProps: SVGProps<SVGCircleElement> = {
   pointerEvents: "auto",
 };
 
-const Chart = ({ filter, selectedLevel, onLevelChange }: Props) => {
+const Chart = ({ filter, selectedLevel, onLevelChange, data }: Props) => {
   // const getProps = (type: FilterValueType): Partial<SVGProps<SVGTextElement>> => {
   //    if (!filter) {
   //        return {  };
@@ -65,18 +67,14 @@ const Chart = ({ filter, selectedLevel, onLevelChange }: Props) => {
 
   const handleTextClick = (text: string, level: Level, textId: string) => {
     let details: string[] = [];
-
+  
     for (const [sectionKey, section] of data) {
       for (const [placementKey, placement] of section) {
         for (const [levelKey, levelData] of placement) {
           if (levelKey === level) {
-            levelData.forEach((group) => {
-              group.forEach((item) => {
-                if (
-                  item.details &&
-                  Array.isArray(item.details) &&
-                  item.text === text
-                ) {
+            levelData.forEach((group: { text: string; details?: string[] }[]) => {
+              group.forEach((item: { text: string; details?: string[] }) => {
+                if (item.details && Array.isArray(item.details) && item.text === text) {
                   details = item.details;
                 }
               });
@@ -85,6 +83,7 @@ const Chart = ({ filter, selectedLevel, onLevelChange }: Props) => {
         }
       }
     }
+  
     setClickedTextId(textId);
     setSelectedTextDetails(details.join(", "));
   };
@@ -122,7 +121,7 @@ const Chart = ({ filter, selectedLevel, onLevelChange }: Props) => {
                 fontWeight: 600,
                 onClick:
                   selectedLevel !== null
-                    ? () => handleTextClick(text, levelKey, textId)
+                    ? () => handleTextClick(text, levelKey as Level, textId)
                     : undefined,
                 pointerEvents: "auto",
               };
